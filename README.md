@@ -1,36 +1,34 @@
-# VIE — Verifiable Impact Escrow
+# VIE — Verifiable Impact Evidence Registry
 
-VIE is a standalone GenLayer Intelligent Contract primitive for releasing impact funding only when validator consensus confirms that submitted evidence demonstrates a predefined, measurable impact. Sponsors fund an impact commitment, providers submit bounded evidence, and validators independently assess the result.
+VIE is a standalone GenLayer Intelligent Contract for publishing machine-readable attestations about measurable impact claims. A claimant commits a baseline, target, unit, measurement period, and methodology; validators independently inspect submitted public evidence and return `VERIFIED`, `PARTIAL`, `NOT_VERIFIED`, `INCONCLUSIVE`, or `STALE`.
 
-## Live deployment
+VIE does not hold funds. Its reusable output is a versioned impact record that grant systems, sustainability programs, climate registries, and public-good reporting tools can consume.
 
-- Network: GenLayer StudioNet
-- Chain ID: `61999`
-- Contract: `0x76aE34bF991Fd5ffA406C598B67A23C9a6edCD5a`
-- [Open VIE in Studio Explorer](https://explorer-studio.genlayer.com/address/0x76aE34bF991Fd5ffA406C598B67A23C9a6edCD5a)
-- Deployment transaction: `0x3b80be3ea52cb41c8969138ef992b3d4b82bfc49fc71749670ce1d214c26954d`
+## Lifecycle
 
-The exact source in `contracts/aase.py` was deployed successfully to StudioNet. The deployment transaction was accepted with a one-round majority consensus result and five revealed validator votes.
+`OPEN → EVIDENCE_SUBMITTED → ASSESSED → FINALIZED`
 
-Validators independently acquire public evidence, attach visual evidence to vision-capable model calls, and return a structured verdict. Deterministic contract code handles the state machine, weighted deliverables, partial payout calculation, timeout recovery, bonds, fees, cancellation, callbacks, bilateral settlement, and zero-before-transfer escrow safety.
-
-VIE is reusable for grants, climate and sustainability commitments, public-good milestones, community programs, and outcome-based funding. It is intentionally contract-only: downstream applications can consume its machine-readable verdict and payout state without trusting a backend operator.
+An independent party may challenge an assessment before finalization. The contract records evidence provenance, observed values, assessment count, challenge state, and the validator-produced verified value. It uses GenLayer consensus because the evidence may be public web material and the question is semantic: whether that evidence supports the claimed measurement without inventing data.
 
 ## Interface
 
-- `create_service_intent(...)` — create and fund an agent service intent.
-- `add_agent_bond(...)` — post an optional agent bond.
-- `submit_agent_evidence(...)` — submit bounded work evidence.
-- `resolve(...)` — run validator consensus and settle.
-- `timeout_refund(...)`, `cancel_before_evidence(...)` — recovery paths.
-- `accept_mutual_agent_settlement(...)` — bilateral split after inconclusive review.
+- `create_impact_claim(...)` — commit a baseline, target, unit, period, methodology, and optional callback.
+- `submit_impact_evidence(...)` — attach bounded source evidence and observed values.
+- `assess_impact(...)` — obtain an independently checked structured impact assessment.
+- `challenge_assessment(...)` — flag an assessment from an independent address.
+- `finalize_assessment(...)` — close the challenge window.
+- `get_claim(...)`, `get_evidence(...)`, `get_assessment(...)`, `stats()` — read state.
 
-## Documentation basis
+## Development
 
-https://docs.genlayer.com/developers/intelligent-contracts/equivalence-principle
+```powershell
+python -m py_compile contracts/impact.py
+genvm-lint check contracts/impact.py --json
+pytest -q tests/direct
+```
 
-https://docs.genlayer.com/developers/intelligent-contracts/features/web-access
+## Deployment
 
-https://docs.genlayer.com/developers/intelligent-contracts/features/image-processing
+Live deployment: `0x10A8b3B91F39b829502dDc74F579d9C18cE5b35C` on GenLayer StudioNet (chain ID `61999`). [Studio Explorer](https://explorer-studio.genlayer.com/address/0x10A8b3B91F39b829502dDc74F579d9C18cE5b35C). Deployment transaction: `0x8619caa604c9391b466484dbe7c36c94f46462985bc54309aab2503f8e1d609c`.
 
-https://skills.genlayer.com/
+Live lifecycle: create `0xe9c27cd5f65992269b131449ffe9762b9fc3c39431a11c0e27da6176830feb10`; evidence `0x57ff98b694326b40c8a82c19fabbc81999bef3a233477322c3fd7ed4aef1c1f1`; successful real-validator assessment `0x0964aef4945e25f0d19c0047c0dd99be12c4109c1f28c6eaf7b81457983ff117`. Result: `PARTIAL`, verified value `50t`, with a seven-day challenge window.

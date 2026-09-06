@@ -1,32 +1,21 @@
 from pathlib import Path
 
-from conftest import set_value
-
-CONTRACT = str(Path(__file__).parents[2] / "contracts" / "vie.py")
-GEN = 10**18
+CONTRACT = str(Path(__file__).parents[2] / "contracts" / "impact.py")
 ZERO = "0x0000000000000000000000000000000000000000"
 
 
-def test_create_service_intent_records_terms(direct_vm, direct_deploy, direct_alice, direct_bob):
+def test_impact_claim_records_baseline_and_target(direct_vm, direct_deploy, direct_alice):
     contract = direct_deploy(CONTRACT)
     direct_vm.sender = direct_alice
-    set_value(direct_vm, GEN)
-    intent_id = contract.create_service_intent(
-        direct_bob,
-        "Return a research brief with cited primary sources.",
-        "Evidence must include the delivered brief and public source URLs.",
-        '[{"id":"brief","weight_bps":7000},{"id":"sources","weight_bps":3000}]',
-        1800, 1800, ZERO, ZERO, 0,
-    )
-    assert intent_id == 1
-    assert '"status": "OPEN"' in contract.get_intent(intent_id)
+    claim_id = contract.create_impact_claim("100 tonnes", "50 tonnes", "tonnes CO2e", "2026", "metered methodology", ZERO)
+    assert claim_id == 1
+    assert '"status": "OPEN"' in contract.get_claim(claim_id)
 
 
-def test_agent_evidence_is_bounded_and_typed(direct_vm, direct_deploy, direct_alice, direct_bob):
+def test_only_claimant_can_submit_impact_evidence(direct_vm, direct_deploy, direct_alice, direct_bob):
     contract = direct_deploy(CONTRACT)
     direct_vm.sender = direct_alice
-    set_value(direct_vm, GEN)
-    intent_id = contract.create_service_intent(direct_bob, "Do work", "Provide evidence", '[{"id":"work","weight_bps":10000}]', 1800, 1800, ZERO, ZERO, 0)
+    claim_id = contract.create_impact_claim("100", "50", "units", "2026", "metered", ZERO)
     direct_vm.sender = direct_bob
-    contract.submit_agent_evidence(intent_id, "WEB_TEXT", "https://example.com", "public source")
-    assert 'WEB_TEXT' in contract.get_evidence(intent_id, 0)
+    with direct_vm.expect_revert("only claimant"):
+        contract.submit_impact_evidence(claim_id, "REPORT", "https://example.com/report", "50", "source")
