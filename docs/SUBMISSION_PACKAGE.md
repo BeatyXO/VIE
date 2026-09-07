@@ -24,7 +24,9 @@ pytest -q tests/direct
 
 The deployed source includes real retrieval, enforced challenge deadlines, and one-shot challenge reassessment.
 
-- Create claim: `0xe9c27cd5f65992269b131449ffe9762b9fc3c39431a11c0e27da6176830feb10`
-- Submit evidence: `0x57ff98b694326b40c8a82c19fabbc81999bef3a233477322c3fd7ed4aef1c1f1`
-- Real-validator assessment: `0x0964aef4945e25f0d19c0047c0dd99be12c4109c1f28c6eaf7b81457983ff117`
-- Final observed state: `ASSESSED`, verdict `PARTIAL`, verified value `50t`, challenge deadline `2026-09-13T07:51:26Z`.
+## Fresh measured lifecycle
+
+- Create claim: `0x6a3619cb2ce75016d940d4dc403e390a254aafa9ca34081399a23c06422850dd`
+- Submit evidence: `0x8e154ea5af2d3e9e0f89fd4a6cfb80622629226590a6a05b50feec55634f0ccb`
+- Real-validator assessment: `0x8065353820948796506b237522bcfbb1eaef546bfcebfee3f72a8e61eaa978de`
+- Final observed state: `ASSESSED`, verdict `NOT_VERIFIED`, no verified value. Validators retrieved the public GenLayer landing page and correctly found no CO2e measurements supporting the submitted claim; challenge deadline: `2026-09-14T13:56:54Z`.
