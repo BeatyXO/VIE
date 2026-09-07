@@ -30,6 +30,6 @@ pytest -q tests/direct
 
 ## Deployment
 
-Live deployment: `0x10A8b3B91F39b829502dDc74F579d9C18cE5b35C` on GenLayer StudioNet (chain ID `61999`). [Studio Explorer](https://explorer-studio.genlayer.com/address/0x10A8b3B91F39b829502dDc74F579d9C18cE5b35C). Deployment transaction: `0x8619caa604c9391b466484dbe7c36c94f46462985bc54309aab2503f8e1d609c`.
+Live deployment: `0x82d532539c2070A9FCea8e5E2B0908b858ab2ed2` on GenLayer StudioNet (chain ID `61999`). [Studio Explorer](https://explorer-studio.genlayer.com/address/0x82d532539c2070A9FCea8e5E2B0908b858ab2ed2). Deployment transaction: `0x3a3b13baf466416c4bd5bca51447cfbb56a69929427ee5d5648dc75a03407a8f`.
 
-The current deployment predates the source hardening in this repository and must not be used as evidence for the final submission. Deploy the updated source before submission.
+The current deployment matches the one-shot challenge and retrieved-evidence source in this repository.

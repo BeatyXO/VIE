@@ -57,6 +57,7 @@ class VerifiableImpactRegistry(gl.Contract):
             "status": STATUS_OPEN, "verdict": INCONCLUSIVE, "verified_value": "",
             "reason": "", "evidence_count": 0, "assessment_count": 0, "challenged": False,
             "challenge_deadline": "", "finalized": False,
+            "challenge_count": 0,
         })
         return claim_id
 
@@ -98,11 +99,12 @@ class VerifiableImpactRegistry(gl.Contract):
         rec = self._claim(claim_id)
         if gl.message.sender_address == Address(rec["claimant"]):
             raise gl.vm.UserError("EXPECTED: independent challenger required")
-        if rec["status"] != STATUS_ASSESSED or len(reason) == 0 or len(reason) > 900:
+        if rec["status"] != STATUS_ASSESSED or int(rec.get("challenge_count", 0)) >= 1 or len(reason) == 0 or len(reason) > 900:
             raise gl.vm.UserError("EXPECTED: assessment not challengeable")
         if self._after(gl.message_raw["datetime"], str(rec["challenge_deadline"])):
             raise gl.vm.UserError("EXPECTED: challenge window expired")
         rec["challenged"] = True
+        rec["challenge_count"] = int(rec.get("challenge_count", 0)) + 1
         rec["status"] = STATUS_CHALLENGED
         rec["reason"] = reason
         self._write(claim_id, rec)
@@ -119,7 +121,7 @@ class VerifiableImpactRegistry(gl.Contract):
         rec["assessment_count"] = int(rec["assessment_count"]) + 1
         rec["status"] = STATUS_ASSESSED
         rec["challenged"] = False
-        rec["challenge_deadline"] = self._add_days(gl.message_raw["datetime"], 7)
+        rec["challenge_deadline"] = gl.message_raw["datetime"]
         self.records[self._assessment_key(claim_id)] = json.dumps(result)
         self._write(claim_id, rec)
 
@@ -128,7 +130,7 @@ class VerifiableImpactRegistry(gl.Contract):
         rec = self._claim(claim_id)
         if rec["status"] != STATUS_ASSESSED:
             raise gl.vm.UserError("EXPECTED: assessment required")
-        if self._after(str(rec["challenge_deadline"]), gl.message_raw["datetime"]):
+        if int(rec.get("challenge_count", 0)) == 0 and self._after(str(rec["challenge_deadline"]), gl.message_raw["datetime"]):
             raise gl.vm.UserError("EXPECTED: challenge window active")
         rec["status"] = STATUS_FINALIZED
         rec["finalized"] = True

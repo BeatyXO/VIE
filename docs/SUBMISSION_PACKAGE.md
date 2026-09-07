@@ -18,11 +18,11 @@ pytest -q tests/direct
 
 - Network: GenLayer StudioNet
 - Chain ID: `61999`
-- Contract: `0x10A8b3B91F39b829502dDc74F579d9C18cE5b35C`
-- Deployment transaction: `0x8619caa604c9391b466484dbe7c36c94f46462985bc54309aab2503f8e1d609c`
-- Explorer: https://explorer-studio.genlayer.com/address/0x10A8b3B91F39b829502dDc74F579d9C18cE5b35C
+- Contract: `0x82d532539c2070A9FCea8e5E2B0908b858ab2ed2`
+- Deployment transaction: `0x3a3b13baf466416c4bd5bca51447cfbb56a69929427ee5d5648dc75a03407a8f`
+- Explorer: https://explorer-studio.genlayer.com/address/0x82d532539c2070A9FCea8e5E2B0908b858ab2ed2
 
-The previous deployment is retained only as historical context. The updated source adds real retrieval, challenge deadlines, and challenge reassessment; it requires a fresh deployment.
+The deployed source includes real retrieval, enforced challenge deadlines, and one-shot challenge reassessment.
 
 - Create claim: `0xe9c27cd5f65992269b131449ffe9762b9fc3c39431a11c0e27da6176830feb10`
 - Submit evidence: `0x57ff98b694326b40c8a82c19fabbc81999bef3a233477322c3fd7ed4aef1c1f1`
