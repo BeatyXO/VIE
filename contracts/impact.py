@@ -15,6 +15,7 @@ INCONCLUSIVE = "INCONCLUSIVE"
 STALE = "STALE"
 MAX_TEXT = 2800
 MAX_EVIDENCE = 6
+MAX_FETCHED_BODY = 12000
 MAX_CLAIMS = 8
 CHALLENGE_SECONDS = 60 * 60 * 24 * 7
 
@@ -99,9 +100,27 @@ class VerifiableImpactRegistry(gl.Contract):
             raise gl.vm.UserError("EXPECTED: independent challenger required")
         if rec["status"] != STATUS_ASSESSED or len(reason) == 0 or len(reason) > 900:
             raise gl.vm.UserError("EXPECTED: assessment not challengeable")
+        if self._after(gl.message_raw["datetime"], str(rec["challenge_deadline"])):
+            raise gl.vm.UserError("EXPECTED: challenge window expired")
         rec["challenged"] = True
         rec["status"] = STATUS_CHALLENGED
         rec["reason"] = reason
+        self._write(claim_id, rec)
+
+    @gl.public.write
+    def reassess_challenge(self, claim_id: u256) -> None:
+        rec = self._claim(claim_id)
+        if rec["status"] != STATUS_CHALLENGED:
+            raise gl.vm.UserError("EXPECTED: challenge required")
+        result = self._judge(rec, self._bundle(claim_id, int(rec["evidence_count"])))
+        rec["verdict"] = result["verdict"]
+        rec["verified_value"] = result["verified_value"]
+        rec["reason"] = result["reason"]
+        rec["assessment_count"] = int(rec["assessment_count"]) + 1
+        rec["status"] = STATUS_ASSESSED
+        rec["challenged"] = False
+        rec["challenge_deadline"] = self._add_days(gl.message_raw["datetime"], 7)
+        self.records[self._assessment_key(claim_id)] = json.dumps(result)
         self._write(claim_id, rec)
 
     @gl.public.write
@@ -135,8 +154,9 @@ class VerifiableImpactRegistry(gl.Contract):
         return json.dumps({"next_claim_id": str(self.next_claim_id)})
 
     def _judge(self, rec: dict, bundle: str) -> dict:
-        prompt = "You are an impact verification validator. Assess only whether the evidence supports the baseline-to-target impact claim. Return JSON with verdict VERIFIED, PARTIAL, NOT_VERIFIED, INCONCLUSIVE, or STALE; verified_value; reason. Do not invent measurements.\nCLAIM:\n" + json.dumps(rec) + "\nEVIDENCE:\n" + bundle
         def run():
+            retrieved = self._retrieve_bundle_from_json(bundle)
+            prompt = "You are an impact verification validator. Assess only whether the RETRIEVED evidence supports the baseline-to-target impact claim. Failed retrieval is not evidence of absence and must produce INCONCLUSIVE or STALE. Return JSON with verdict VERIFIED, PARTIAL, NOT_VERIFIED, INCONCLUSIVE, or STALE; verified_value; reason. Do not invent measurements.\nCLAIM:\n" + json.dumps(rec) + "\nRETRIEVED EVIDENCE:\n" + retrieved
             data = self._dict(gl.nondet.exec_prompt(prompt, response_format="json"))
             verdict = str(data.get("verdict", INCONCLUSIVE)).upper()
             if verdict not in (VERIFIED, PARTIAL, NOT_VERIFIED, INCONCLUSIVE, STALE): verdict = INCONCLUSIVE
@@ -153,6 +173,26 @@ class VerifiableImpactRegistry(gl.Contract):
         for i in range(count):
             out.append(self._dict(self.records[self._evidence_key(claim_id, i)]))
         return json.dumps(out)
+
+    def _retrieve_bundle(self, claim_id: u256, count: int) -> str:
+        return self._retrieve_bundle_from_json(self._bundle(claim_id, count))
+
+    def _retrieve_bundle_from_json(self, raw: str) -> str:
+        items = []
+        for item in json.loads(raw):
+            try:
+                response = gl.nondet.web.get(str(item["source"]))
+                status = int(getattr(response, "status_code", getattr(response, "status", 200)))
+                if status >= 400:
+                    raise gl.vm.UserError("EXTERNAL: source fetch failed")
+                item["retrieved_content"] = response.body.decode("utf-8")[:MAX_FETCHED_BODY]
+                item["retrieved_at"] = gl.message_raw["datetime"]
+                item["retrieval_status"] = "OK"
+            except Exception:
+                item["retrieval_status"] = "FAILED"
+                item["retrieved_content"] = ""
+            items.append(item)
+        return json.dumps(items)
 
     def _claim(self, claim_id: u256) -> dict:
         key = self._key(claim_id)
