@@ -14,15 +14,23 @@ genvm-lint check contracts/impact.py --json
 pytest -q tests/direct
 ```
 
-## Previous deployment
+## Deployment
 
 - Network: GenLayer StudioNet
 - Chain ID: `61999`
-- Contract: `0x82d532539c2070A9FCea8e5E2B0908b858ab2ed2`
-- Deployment transaction: `0x3a3b13baf466416c4bd5bca51447cfbb56a69929427ee5d5648dc75a03407a8f`
-- Explorer: https://explorer-studio.genlayer.com/address/0x82d532539c2070A9FCea8e5E2B0908b858ab2ed2
+- Contract: `0x66A0CB4b598135270c1e8ea4F9F9DD474Cd399AF`
+- Deployment transaction: `0x89564cf613e75d9572c4230e7e2b2fef3fe25052580c4c0320e2f03ae40ceee7`
+- Explorer: https://explorer-studio.genlayer.com/address/0x66A0CB4b598135270c1e8ea4F9F9DD474Cd399AF
 
-The deployed source includes real retrieval, enforced challenge deadlines, and one-shot challenge reassessment.
+The deployed source includes real retrieval, enforced challenge deadlines, one-shot challenge reassessment, and deterministic restriction of all-failed evidence bundles to `INCONCLUSIVE` or `STALE`.
+
+## Source parity
+
+The deployed source was retrieved with `genlayer code`. After removing the CLI wrapper and normalizing only terminal newline/encoding formatting, the SHA-256 is identical to the submitted `contracts/impact.py` at commit `eaf91ff`:
+
+`BAB29C7E0493DC8BBA36303C504F06712B7E2836AA3E66EDB6478F5B26A5F823`
+
+The normalized unified diff is empty. The only raw difference was a terminal newline emitted by the CLI wrapper.
 
 ## Fresh measured lifecycle
 
