@@ -158,16 +158,20 @@ class VerifiableImpactRegistry(gl.Contract):
     def _judge(self, rec: dict, bundle: str) -> dict:
         def run():
             retrieved = self._retrieve_bundle_from_json(bundle)
-            prompt = "You are an impact verification validator. Assess only whether the RETRIEVED evidence supports the baseline-to-target impact claim. Failed retrieval is not evidence of absence and must produce INCONCLUSIVE or STALE. Return JSON with verdict VERIFIED, PARTIAL, NOT_VERIFIED, INCONCLUSIVE, or STALE; verified_value; reason. Do not invent measurements.\nCLAIM:\n" + json.dumps(rec) + "\nRETRIEVED EVIDENCE:\n" + retrieved
+            retrieved_items = json.loads(retrieved)
+            successful_fetch_count = sum(1 for item in retrieved_items if item.get("retrieval_status") == "OK")
+            prompt = "You are an impact verification validator. Assess only whether the RETRIEVED evidence supports the baseline-to-target impact claim. Failed retrieval is not evidence of absence. If successful_fetch_count is zero, the only permitted verdicts are INCONCLUSIVE or STALE. Return JSON with verdict VERIFIED, PARTIAL, NOT_VERIFIED, INCONCLUSIVE, or STALE; verified_value; reason. Do not invent measurements.\nCLAIM:\n" + json.dumps(rec) + "\nSUCCESSFUL_FETCH_COUNT:\n" + str(successful_fetch_count) + "\nRETRIEVED EVIDENCE:\n" + retrieved
             data = self._dict(gl.nondet.exec_prompt(prompt, response_format="json"))
             verdict = str(data.get("verdict", INCONCLUSIVE)).upper()
             if verdict not in (VERIFIED, PARTIAL, NOT_VERIFIED, INCONCLUSIVE, STALE): verdict = INCONCLUSIVE
-            return {"verdict": verdict, "verified_value": str(data.get("verified_value", ""))[:300], "reason": str(data.get("reason", "No usable reason"))[:700]}
+            if successful_fetch_count == 0:
+                verdict = STALE if verdict == STALE else INCONCLUSIVE
+            return {"verdict": verdict, "verified_value": str(data.get("verified_value", ""))[:300], "reason": str(data.get("reason", "No usable reason"))[:700], "successful_fetch_count": successful_fetch_count}
         def validate(leader_result):
             if not isinstance(leader_result, gl.vm.Return): return False
             other = run()
             first = self._dict(leader_result.calldata)
-            return str(first.get("verdict", INCONCLUSIVE)).upper() == other["verdict"] and str(first.get("verified_value", ""))[:300] == other["verified_value"]
+            return str(first.get("verdict", INCONCLUSIVE)).upper() == other["verdict"] and str(first.get("verified_value", ""))[:300] == other["verified_value"] and int(first.get("successful_fetch_count", 0)) == other["successful_fetch_count"]
         return gl.vm.run_nondet_unsafe(run, validate)
 
     def _bundle(self, claim_id: u256, count: int) -> str:
