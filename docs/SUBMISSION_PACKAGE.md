@@ -32,6 +32,20 @@ The deployed source was retrieved with `genlayer code`. After removing the CLI w
 
 The normalized unified diff is empty. The only raw difference was a terminal newline emitted by the CLI wrapper.
 
+## Fresh real-validator lifecycle
+
+Executed against the deployed contract above on 2026-09-10 using the dedicated deployer account and a real public EPA URL:
+
+- Create claim: `0xea72a9bab498e3f27fac716aa7149e003a2935b3d080d0c45eba84b267a84c8a`
+- Submit evidence: `0x04c4ab13100f1a22dd19161352d3b6a53f00efe1a8f7566d626bf61b0c7abc56`
+- Real-validator assessment: `0x1a1a8f102420ed41d7ece31d41ad1b87cb56266a8b4934c235fd66f18b7197c7`
+- Evidence source: `https://www.epa.gov/ghgemissions/overview-greenhouse-gases`
+- Final observed status: `ASSESSED`
+- Final observed verdict: `NOT_VERIFIED`
+- `successful_fetch_count`: `1`
+
+The validators independently retrieved the public EPA page and correctly rejected the claim because it did not substantiate the claimant-specific baseline-to-target measurement. The assessment was finalized on-chain with consensus agreement; the challenge window remains available for finalization.
+
 ## Fresh measured lifecycle
 
 - Create claim: `0x6a3619cb2ce75016d940d4dc403e390a254aafa9ca34081399a23c06422850dd`
